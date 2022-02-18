@@ -9,7 +9,7 @@ class Casrel(nn.Module):
         self.config = config
         self.bert_dim = 768
         self.bert_encoder = BertModel.from_pretrained("hfl/chinese-bert-wwm",
-                                                      cache_dir='./cache')
+                                                      cache_dir='drive/MyDrive/app/CasRel-pytorch/CasRel-reimplement/cache')
         self.sub_heads_linear = nn.Linear(self.bert_dim, 1)
         self.sub_tails_linear = nn.Linear(self.bert_dim, 1)
         self.obj_heads_linear = nn.Linear(self.bert_dim, self.config.rel_num)
@@ -60,5 +60,6 @@ class Casrel(nn.Module):
         # [batch_size, 1, seq_len]
         sub_tail_mapping = data['sub_tail'].unsqueeze(1)
         # [batch_size, seq_len, rel_num]
-        pred_obj_heads, pred_obj_tails = self.get_objs_for_specific_sub(sub_head_mapping, sub_tail_mapping, encoded_text)
+        pred_obj_heads, pred_obj_tails = self.get_objs_for_specific_sub(sub_head_mapping, sub_tail_mapping,
+                                                                        encoded_text)
         return pred_sub_heads, pred_sub_tails, pred_obj_heads, pred_obj_tails
