@@ -17,6 +17,7 @@ random.seed(seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', type=str, default='Casrel', help='name of the model')
 parser.add_argument('--lr', type=float, default=1e-5)

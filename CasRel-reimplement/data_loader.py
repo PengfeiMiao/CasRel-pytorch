@@ -7,7 +7,7 @@ from utils import get_tokenizer
 import numpy as np
 from random import choice
 
-tokenizer = get_tokenizer('the path of your vocab.txt')
+tokenizer = get_tokenizer('./data/vocab.txt')
 
 
 BERT_MAX_LEN = 512
@@ -28,10 +28,10 @@ class CMEDDataset(Dataset):
         self.is_test = is_test
         self.tokenizer = tokenizer
         if self.config.debug:
-            self.json_data = json.load(open(os.path.join(self.config.data_path, prefix + '.json')))[:500]
+            self.json_data = json.load(open(os.path.join(self.config.data_path, prefix + '.json'), encoding='utf-8'))[:500]
         else:
-            self.json_data = json.load(open(os.path.join(self.config.data_path, prefix + '.json')))
-        self.rel2id = json.load(open(os.path.join(self.config.data_path, 'rel2id.json')))[1]
+            self.json_data = json.load(open(os.path.join(self.config.data_path, prefix + '.json'), encoding='utf-8'))
+        self.rel2id = json.load(open(os.path.join(self.config.data_path, 'rel2id.json'), encoding='utf-8'))[1]
 
     def __len__(self):
         return len(self.json_data)

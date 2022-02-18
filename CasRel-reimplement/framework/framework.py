@@ -1,17 +1,20 @@
 import torch.optim as optim
 from torch import nn
 import os
-import data_loader
 import torch.nn.functional as F
 import torch
 import numpy as np
 import json
 import time
-
+# import sys
+# sys.path.append("..")
+import data_loader
 
 class Framework(object):
+
     def __init__(self, con):
         self.config = con
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def logging(self, s, print_=True, log_=True):
         if print_:
@@ -23,7 +26,7 @@ class Framework(object):
     def train(self, model_pattern):
         # initialize the model
         ori_model = model_pattern(self.config)
-        ori_model.cuda()
+        ori_model.to(self.device)
 
         # define the optimizer
         optimizer = optim.Adam(filter(lambda p: p.requires_grad, ori_model.parameters()), lr=self.config.learning_rate)
@@ -236,7 +239,7 @@ class Framework(object):
         model = model_pattern(self.config)
         path = os.path.join(self.config.checkpoint_dir, self.config.model_save_name)
         model.load_state_dict(torch.load(path))
-        model.cuda()
+        model.to(self.device)
         model.eval()
         test_data_loader = data_loader.get_loader(self.config, prefix=self.config.test_prefix, is_test=True)
         precision, recall, f1_score = self.test(test_data_loader, model, True)
