@@ -9,7 +9,7 @@ class Casrel(nn.Module):
         self.config = config
         self.bert_dim = 768
         self.bert_encoder = BertModel.from_pretrained("hfl/chinese-bert-wwm",
-                                                      cache_dir='drive/MyDrive/app/CasRel-pytorch/CasRel-reimplement/cache')
+                                                      cache_dir='drive/MyDrive/app/CasRel-pytorch/CasRel-reimplement/cache/model')
         self.sub_heads_linear = nn.Linear(self.bert_dim, 1)
         self.sub_tails_linear = nn.Linear(self.bert_dim, 1)
         self.obj_heads_linear = nn.Linear(self.bert_dim, self.config.rel_num)
