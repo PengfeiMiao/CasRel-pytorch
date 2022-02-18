@@ -7,7 +7,7 @@ from utils import get_tokenizer
 import numpy as np
 from random import choice
 
-tokenizer = get_tokenizer('./data/vocab.txt')
+tokenizer = get_tokenizer('data/vocab.txt')
 
 
 BERT_MAX_LEN = 512
