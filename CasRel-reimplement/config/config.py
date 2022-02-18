@@ -14,7 +14,7 @@ class Config(object):
         self.dataset = args.dataset
 
         # path and name
-        self.root = 'CasRel-pytorch/CasRel-reimplement/cache'
+        self.root = 'drive/MyDrive/app/CasRel-pytorch/CasRel-reimplement/cache'
         self.data_path = self.root + '/data/' + self.dataset
         self.checkpoint_dir = self.root + '/checkpoint/' + self.dataset
         self.log_dir = self.root + '/log/' + self.dataset
