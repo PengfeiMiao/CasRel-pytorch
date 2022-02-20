@@ -7,7 +7,7 @@ from utils import get_tokenizer
 import numpy as np
 from random import choice
 
-tokenizer = get_tokenizer('CasRel-pytorch/CasRel-reimplement/data/vocab.txt')
+tokenizer = get_tokenizer('./data/vocab.txt')
 
 
 BERT_MAX_LEN = 512
@@ -162,7 +162,7 @@ class DataPreFetcher(object):
         except StopIteration:
             self.next_data = None
             return
-        with torch.cuda.stream(self.stream):
+        with torch.cuda.Stream(self.stream):
             for k, v in self.next_data.items():
                 if isinstance(v, torch.Tensor):
                     self.next_data[k] = self.next_data[k].cuda(non_blocking=True)

@@ -116,8 +116,9 @@ class Framework(object):
                     best_epoch = epoch
                     best_precision = precision
                     best_recall = recall
-                    self.logging("saving the model, epoch: {:3d}, best f1: {:4.2f}, precision: {:4.2f}, recall: {:4.2f}".
-                                 format(best_epoch, best_f1_score, precision, recall))
+                    self.logging(
+                        "saving the model, epoch: {:3d}, best f1: {:4.2f}, precision: {:4.2f}, recall: {:4.2f}".
+                        format(best_epoch, best_f1_score, precision, recall))
                     # save the best model
                     path = os.path.join(self.config.checkpoint_dir, self.config.model_save_name)
                     if not self.config.debug:
@@ -132,6 +133,7 @@ class Framework(object):
 
     def test(self, test_data_loader, model, output=False, h_bar=0.5, t_bar=0.5):
 
+        fw = None
         if output:
             # check the result dir
             if not os.path.exists(self.config.result_dir):
@@ -139,7 +141,7 @@ class Framework(object):
 
             path = os.path.join(self.config.result_dir, self.config.result_save_name)
 
-            fw = open(path, 'w')
+            fw = open(path, 'w', encoding="utf-8")
 
         orders = ['subject', 'relation', 'object']
 
@@ -149,9 +151,24 @@ class Framework(object):
                 ret.append(tuple(triple))
             return ret
 
-        test_data_prefetcher = data_loader.DataPreFetcher(test_data_loader)
-        data = test_data_prefetcher.next()
-        id2rel = json.load(open(os.path.join(self.config.data_path, 'rel2id.json')))[0]
+        idx = 0
+
+        def next_for_cpu(loader, idx0):
+            for iter_id0, batch0 in enumerate(loader):
+                if iter_id0 >= len(loader):
+                    return None
+                elif idx0 == iter_id0:
+                    return batch0
+
+        test_data_prefetcher = None
+        if torch.cuda.is_available():
+            test_data_prefetcher = data_loader.DataPreFetcher(test_data_loader)
+            data = test_data_prefetcher.next()
+        else:
+            data = next_for_cpu(test_data_loader, idx)
+            idx += 1
+
+        id2rel = json.load(open(os.path.join(self.config.data_path, 'rel2id.json'), encoding="utf-8"))[0]
         correct_num, predict_num, gold_num = 0, 0, 0
 
         while data is not None:
@@ -161,7 +178,8 @@ class Framework(object):
                 mask = data['mask']
                 encoded_text = model.get_encoded_text(token_ids, mask)
                 pred_sub_heads, pred_sub_tails = model.get_subs(encoded_text)
-                sub_heads, sub_tails = np.where(pred_sub_heads.cpu()[0] > h_bar)[0], np.where(pred_sub_tails.cpu()[0] > t_bar)[0]
+                sub_heads, sub_tails = np.where(pred_sub_heads.cpu()[0] > h_bar)[0], \
+                                       np.where(pred_sub_tails.cpu()[0] > t_bar)[0]
                 subjects = []
                 for sub_head in sub_heads:
                     sub_tail = sub_tails[sub_tails >= sub_head]
@@ -181,12 +199,14 @@ class Framework(object):
                         sub_tail_mapping[subject_idx][0][subject[2]] = 1
                     sub_tail_mapping = sub_tail_mapping.to(repeated_encoded_text)
                     sub_head_mapping = sub_head_mapping.to(repeated_encoded_text)
-                    pred_obj_heads, pred_obj_tails = model.get_objs_for_specific_sub(sub_head_mapping, sub_tail_mapping, repeated_encoded_text)
+                    pred_obj_heads, pred_obj_tails = model.get_objs_for_specific_sub(sub_head_mapping, sub_tail_mapping,
+                                                                                     repeated_encoded_text)
                     for subject_idx, subject in enumerate(subjects):
                         sub = subject[0]
                         sub = ''.join([i.lstrip("##") for i in sub])
                         sub = ' '.join(sub.split('[unused1]'))
-                        obj_heads, obj_tails = np.where(pred_obj_heads.cpu()[subject_idx] > h_bar), np.where(pred_obj_tails.cpu()[subject_idx] > t_bar)
+                        obj_heads, obj_tails = np.where(pred_obj_heads.cpu()[subject_idx] > h_bar), np.where(
+                            pred_obj_tails.cpu()[subject_idx] > t_bar)
                         for obj_head, rel_head in zip(*obj_heads):
                             for obj_tail, rel_tail in zip(*obj_tails):
                                 if obj_head <= obj_tail and rel_head == rel_tail:
@@ -227,7 +247,11 @@ class Framework(object):
                     }, ensure_ascii=False)
                     fw.write(result + '\n')
 
-                data = test_data_prefetcher.next()
+                if torch.cuda.is_available():
+                    data = test_data_prefetcher.next()
+                else:
+                    data = next_for_cpu(test_data_loader, idx)
+                    idx += 1
 
         print("correct_num: {:3d}, predict_num: {:3d}, gold_num: {:3d}".format(correct_num, predict_num, gold_num))
 
@@ -239,7 +263,7 @@ class Framework(object):
     def testall(self, model_pattern):
         model = model_pattern(self.config)
         path = os.path.join(self.config.checkpoint_dir, self.config.model_save_name)
-        model.load_state_dict(torch.load(path))
+        model.load_state_dict(torch.load(path, map_location="cpu"))
         model.to(self.device)
         model.eval()
         test_data_loader = data_loader.get_loader(self.config, prefix=self.config.test_prefix, is_test=True)
