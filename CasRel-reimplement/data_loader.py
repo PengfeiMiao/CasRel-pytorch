@@ -11,7 +11,7 @@ tokenizer = get_tokenizer('./data/vocab.txt')
 
 
 BERT_MAX_LEN = 512
-
+REL_NUM = 48
 
 def find_head_idx(source, target):
     target_len = len(target)
@@ -106,8 +106,8 @@ def cmed_collate_fn(batch):
     batch_sub_tails = torch.Tensor(cur_batch, max_text_len).zero_()
     batch_sub_head = torch.Tensor(cur_batch, max_text_len).zero_()
     batch_sub_tail = torch.Tensor(cur_batch, max_text_len).zero_()
-    batch_obj_heads = torch.Tensor(cur_batch, max_text_len, 44).zero_()
-    batch_obj_tails = torch.Tensor(cur_batch, max_text_len, 44).zero_()
+    batch_obj_heads = torch.Tensor(cur_batch, max_text_len, REL_NUM).zero_()
+    batch_obj_tails = torch.Tensor(cur_batch, max_text_len, REL_NUM).zero_()
 
     for i in range(cur_batch):
         batch_token_ids[i, :text_len[i]].copy_(torch.from_numpy(token_ids[i]))
